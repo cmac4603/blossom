@@ -9,6 +9,7 @@ name = "blossom"
 path = "./src/bin/main.rs"
 
 [dependencies]
+embedded-graphics = "0.8"
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c5"] }
 esp-hal = { version = "~1.1.0", features = ["esp32c5", "unstable"] }
 esp-println = { version = "0.17.0", features = ["esp32c5"] }
@@ -54,6 +55,7 @@ smoltcp = { version = "0.13.0", default-features = false, features = [
   "socket-tcp",
   "socket-udp",
 ] }
+st7735-lcd = "0.10.0"
 trouble-host = { version = "0.6.0", features = ["gatt"] }
 
 critical-section = "1.2.0"

@@ -10,16 +10,23 @@
 use bt_hci::controller::ExternalController;
 use embassy_executor::Spawner;
 use embassy_time::{Delay, Duration, Timer};
+use embedded_graphics::image::Image;
+use embedded_graphics::image::ImageRaw;
+use embedded_graphics::image::ImageRawLE;
+use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::*;
 use embedded_hal_bus::spi::ExclusiveDevice;
-use embedded_sdmmc::SdCard;
+// use embedded_sdmmc::SdCard;
 use esp_hal::clock::CpuClock;
-use esp_hal::gpio::{Input, InputConfig, Level, Output, OutputConfig, Pull};
+use esp_hal::gpio::{Level, Output, OutputConfig, Pull};
 use esp_hal::spi;
 use esp_hal::spi::master::Spi;
 use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println::println;
 use esp_radio::ble::controller::BleConnector;
+use st7735_lcd;
+use st7735_lcd::Orientation;
 use trouble_host::prelude::*;
 
 #[panic_handler]
@@ -77,25 +84,48 @@ async fn main(spawner: Spawner) -> ! {
             .with_mode(spi::Mode::_0),
     )
     .unwrap()
-    .with_sck(peripherals.GPIO6) // clk
-    .with_mosi(peripherals.GPIO2) // cmd
-    .with_miso(peripherals.GPIO7) // d0
+    .with_sck(peripherals.GPIO6)
+    .with_mosi(peripherals.GPIO2)
+    .with_miso(peripherals.GPIO7)
     .into_async();
 
     let sd_cs = Output::new(
-        peripherals.GPIO23, // d3
+        peripherals.GPIO10,
         Level::High,
         OutputConfig::default().with_pull(Pull::Up),
     );
     let spi_dev = ExclusiveDevice::new(spi_bus, sd_cs, Delay).unwrap();
-    let sdcard = SdCard::new(spi_dev, Delay);
 
-    println!("Init SD card controller and retrieve card size...");
-    let sd_size = sdcard.num_bytes().unwrap();
-    println!("card size is {} bytes\r\n", sd_size);
+    let rst = Output::new(
+        peripherals.GPIO1,
+        Level::Low,
+        OutputConfig::default().with_pull(Pull::Up),
+    );
+    let dc = Output::new(
+        peripherals.GPIO3,
+        Level::Low,
+        OutputConfig::default().with_pull(Pull::Up),
+    );
+
+    let rgb = false;
+    let inverted = true;
+    let width = 110;
+    let height = 161;
+
+    let mut display = st7735_lcd::ST7735::new(spi_dev, dc, rst, rgb, inverted, width, height);
+    display.init(&mut Delay).unwrap();
+    display.clear(Rgb565::BLACK).unwrap();
+    display.set_orientation(&Orientation::Landscape).unwrap();
+    display.set_offset(15, 25);
+
+    let image_raw: ImageRawLE<Rgb565> = ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
+    let image = Image::new(&image_raw, Point::new(26, 8));
+    image.draw(&mut display).unwrap();
+
+    println!("lcd test have done.");
 
     loop {
-        Timer::after(Duration::from_secs(1)).await;
+        Timer::after(Duration::from_secs(10)).await;
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples
