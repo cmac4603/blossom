@@ -9,9 +9,16 @@
 
 use bt_hci::controller::ExternalController;
 use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
+use embassy_time::{Delay, Duration, Timer};
+use embedded_hal_bus::spi::ExclusiveDevice;
+use embedded_sdmmc::SdCard;
 use esp_hal::clock::CpuClock;
+use esp_hal::gpio::{Input, InputConfig, Level, Output, OutputConfig, Pull};
+use esp_hal::spi;
+use esp_hal::spi::master::Spi;
+use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
+use esp_println::println;
 use esp_radio::ble::controller::BleConnector;
 use trouble_host::prelude::*;
 
@@ -62,6 +69,30 @@ async fn main(spawner: Spawner) -> ! {
 
     // TODO: Spawn some tasks
     let _ = spawner;
+
+    let spi_bus = Spi::new(
+        peripherals.SPI2,
+        spi::master::Config::default()
+            .with_frequency(Rate::from_khz(400))
+            .with_mode(spi::Mode::_0),
+    )
+    .unwrap()
+    .with_sck(peripherals.GPIO6) // clk
+    .with_mosi(peripherals.GPIO2) // cmd
+    .with_miso(peripherals.GPIO7) // d0
+    .into_async();
+
+    let sd_cs = Output::new(
+        peripherals.GPIO23, // d3
+        Level::High,
+        OutputConfig::default().with_pull(Pull::Up),
+    );
+    let spi_dev = ExclusiveDevice::new(spi_bus, sd_cs, Delay).unwrap();
+    let sdcard = SdCard::new(spi_dev, Delay);
+
+    println!("Init SD card controller and retrieve card size...");
+    let sd_size = sdcard.num_bytes().unwrap();
+    println!("card size is {} bytes\r\n", sd_size);
 
     loop {
         Timer::after(Duration::from_secs(1)).await;
