@@ -7,7 +7,11 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+use core::cell::Cell;
+use core::cell::RefCell;
+
 use bt_hci::controller::ExternalController;
+use critical_section::Mutex;
 use embassy_executor::Spawner;
 use embassy_time::{Delay, Duration, Timer};
 use embedded_graphics::image::Image;
@@ -16,6 +20,7 @@ use embedded_graphics::image::ImageRawLE;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_hal_bus::spi::ExclusiveDevice;
+use embedded_hal_bus::spi::RefCellDevice;
 // use embedded_sdmmc::SdCard;
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{Level, Output, OutputConfig, Pull};
@@ -83,18 +88,20 @@ async fn main(spawner: Spawner) -> ! {
             .with_frequency(Rate::from_khz(400))
             .with_mode(spi::Mode::_0),
     )
-    .unwrap()
+    .expect("should get the bus ok")
     .with_sck(peripherals.GPIO6)
     .with_mosi(peripherals.GPIO2)
     .with_miso(peripherals.GPIO7)
     .into_async();
 
-    let sd_cs = Output::new(
+    let bus = RefCell::new(spi_bus);
+
+    let lcd_rs = Output::new(
         peripherals.GPIO10,
         Level::High,
         OutputConfig::default().with_pull(Pull::Up),
     );
-    let spi_dev = ExclusiveDevice::new(spi_bus, sd_cs, Delay).unwrap();
+    let lcd_dev = RefCellDevice::new(&bus, lcd_rs, Delay).unwrap();
 
     let rst = Output::new(
         peripherals.GPIO1,
@@ -112,7 +119,7 @@ async fn main(spawner: Spawner) -> ! {
     let width = 110;
     let height = 161;
 
-    let mut display = st7735_lcd::ST7735::new(spi_dev, dc, rst, rgb, inverted, width, height);
+    let mut display = st7735_lcd::ST7735::new(lcd_dev, dc, rst, rgb, inverted, width, height);
     display.init(&mut Delay).unwrap();
     display.clear(Rgb565::BLACK).unwrap();
     display.set_orientation(&Orientation::Landscape).unwrap();
