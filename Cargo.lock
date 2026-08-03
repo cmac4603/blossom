@@ -94,6 +94,7 @@ dependencies = [
  "smoltcp",
  "st7735-lcd",
  "static_cell",
+ "tinybmp",
  "trouble-host",
 ]
 
@@ -1870,6 +1871,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ad99c4c6d32803332c548b1af0540b357b3f5fc0be8f6c6bfe8b2e6ae784070"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "tinybmp"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "acb540c3e6f049f914d9c3eaf86ca415e264cf42d2b25bb5c24241af1a1e3aea"
+dependencies = [
+ "embedded-graphics",
 ]
 
 [[package]]

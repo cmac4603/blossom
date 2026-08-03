@@ -14,8 +14,6 @@ use bt_hci::controller::ExternalController;
 use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_graphics::image::Image;
-use embedded_graphics::image::ImageRaw;
-use embedded_graphics::image::ImageRawLE;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_hal_bus::spi::RefCellDevice;
@@ -29,6 +27,7 @@ use esp_println::println;
 use esp_radio::ble::controller::BleConnector;
 use st7735_lcd;
 use st7735_lcd::Orientation;
+use tinybmp::Bmp;
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -108,13 +107,13 @@ async fn main(spawner: Spawner) {
 
     let mut display = st7735_lcd::ST7735::new(lcd_dev, dc, rst, rgb, inverted, width, height);
     display.init(&mut Delay).unwrap();
-    display.clear(Rgb565::BLACK).unwrap();
+    display.clear(Rgb565::WHITE).unwrap();
     display.set_orientation(&Orientation::Landscape).unwrap();
     display.set_offset(15, 25);
 
-    let image_raw: ImageRawLE<Rgb565> = ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
-    let image = Image::new(&image_raw, Point::new(26, 8));
-    image.draw(&mut display).unwrap();
+    let bmp_data = include_bytes!("../assets/rockmon.bmp");
+    let bmp = Bmp::from_slice(bmp_data).unwrap();
+    Image::new(&bmp, Point::new(25, 2)).draw(&mut display).unwrap();
 
     println!("Image drawn to display.");
 
