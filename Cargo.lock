@@ -76,6 +76,7 @@ version = "0.1.0"
 dependencies = [
  "bt-hci",
  "embassy-executor",
+ "embassy-futures",
  "embassy-net",
  "embassy-time",
  "embedded-graphics",
@@ -89,6 +90,8 @@ dependencies = [
  "esp-println",
  "esp-radio",
  "esp-rtos",
+ "heapless 0.9.3",
+ "log",
  "smoltcp",
  "st7735-lcd",
  "static_cell",
