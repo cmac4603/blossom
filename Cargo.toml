@@ -45,7 +45,6 @@ esp-radio = { version = "0.18.0", features = [
   "wifi",
 ] }
 heapless = "0.9"
-log = "0.4"
 smoltcp = { version = "0.13.0", default-features = false, features = [
   "medium-ethernet",
   "multicast",

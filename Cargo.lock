@@ -91,7 +91,6 @@ dependencies = [
  "esp-radio",
  "esp-rtos",
  "heapless 0.9.3",
- "log",
  "smoltcp",
  "st7735-lcd",
  "static_cell",
