@@ -5,7 +5,7 @@ use core::default::Default;
 use embassy_futures::join::join;
 use embassy_time::{Duration, Timer};
 use esp_println::println;
-use heapless::Deque;
+use heapless::{Deque, String, Vec};
 use trouble_host::prelude::*;
 
 /// Max number of connections
@@ -58,7 +58,32 @@ impl EventHandler for Printer {
         let mut seen = self.seen.borrow_mut();
         while let Some(Ok(report)) = it.next() {
             if seen.iter().find(|b| b.raw() == report.addr.raw()).is_none() {
-                println!("discovered: {:?}", report.addr);
+                let ad_structure = AdStructure::decode(report.data);
+                println!("----");
+                println!("New device advertising:");
+                for ad in ad_structure {
+                    if let Ok(adv) = ad {
+                        println!("advertisement: {:?}", adv);
+                        match adv {
+                            AdStructure::CompleteLocalName(name) => {
+                                let mut da_name = Vec::<u8, 64>::new();
+                                da_name.extend_from_slice(name).unwrap();
+                                let local_name = String::from_utf8(da_name).unwrap();
+                                println!("{local_name}");
+                            },
+                            AdStructure::ManufacturerSpecificData {
+                                company_identifier,
+                                payload: _,
+                            } => {
+                                // flipper = 3625
+                                if company_identifier == 3625 {
+                                    println!("flipper found!!!!!");
+                                }
+                            }
+                            _ => (),
+                        }
+                    }
+                }
                 if seen.is_full() {
                     seen.pop_front();
                 }

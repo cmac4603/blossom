@@ -36,8 +36,6 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
 
 extern crate alloc;
 
-// This creates a default app-descriptor required by the esp-idf bootloader.
-// For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
 
 #[allow(
@@ -53,7 +51,6 @@ async fn main(spawner: Spawner) {
     let peripherals = esp_hal::init(config);
 
     esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 65536);
-    // COEX needs more RAM - so we've added some more
     esp_alloc::heap_allocator!(size: 64 * 1024);
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
@@ -113,7 +110,9 @@ async fn main(spawner: Spawner) {
 
     let bmp_data = include_bytes!("../assets/rockmon.bmp");
     let bmp = Bmp::from_slice(bmp_data).unwrap();
-    Image::new(&bmp, Point::new(25, 2)).draw(&mut display).unwrap();
+    Image::new(&bmp, Point::new(25, 2))
+        .draw(&mut display)
+        .unwrap();
 
     println!("Image drawn to display.");
 

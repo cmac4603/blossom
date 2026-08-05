@@ -6,8 +6,7 @@ Currently only flashes to a LilyGo T-Dongle C5.
 
 ## Roadmap
 
-- [ ] Change boot image
-- [ ] LED notifications when devices found
+- [x] Change boot image
 - [ ] LCD should show info
 - [ ] Write to SD card
 - [ ] Detect Flipper Zero BLE devices
